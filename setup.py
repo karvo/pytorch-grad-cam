@@ -8,10 +8,11 @@ with open("requirements.txt", "r") as f:
 
 setuptools.setup(
     name='grad-cam',
-    version='1.4.3',
+    version='1.3.7',
     author='Jacob Gildenblat',
     author_email='jacob.gildenblat@gmail.com',
-    description='Many Class Activation Map methods implemented in Pytorch for classification, segmentation, object detection and more',
+    description='Many Class Activation Map methods implemented in Pytorch. '
+                'Including Grad-CAM, Grad-CAM++, Score-CAM, Ablation-CAM and XGrad-CAM',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/jacobgil/pytorch-grad-cam',
@@ -23,7 +24,7 @@ setuptools.setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
-    packages=setuptools.find_packages(exclude=["*tutorials*"]),
+    packages=setuptools.find_packages(),
     python_requires='>=3.6',
     install_requires=requirements
 )

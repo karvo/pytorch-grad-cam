@@ -4,7 +4,6 @@ import numpy as np
 import torch
 from torchvision import models
 from pytorch_grad_cam import GradCAM, \
-    HiResCAM, \
     ScoreCAM, \
     GradCAMPlusPlus, \
     AblationCAM, \
@@ -12,25 +11,22 @@ from pytorch_grad_cam import GradCAM, \
     EigenCAM, \
     EigenGradCAM, \
     LayerCAM, \
-    FullGrad, \
-    GradCAMElementWise
-    
-
+    FullGrad
 from pytorch_grad_cam import GuidedBackpropReLUModel
 from pytorch_grad_cam.utils.image import show_cam_on_image, \
     deprocess_image, \
     preprocess_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+import os
 
-
-def get_args():
+def get_args(img_path): #<---------------
     parser = argparse.ArgumentParser()
-    parser.add_argument('--use-cuda', action='store_true', default=False,
+    parser.add_argument('--use-cuda', action='store_true', default=True,
                         help='Use NVIDIA GPU acceleration')
     parser.add_argument(
         '--image-path',
         type=str,
-        default='./examples/both.png',
+        default=img_path, #<------------------------------------------------------------------------
         help='Input image path')
     parser.add_argument('--aug_smooth', action='store_true',
                         help='Apply test time augmentation to smooth the CAM')
@@ -40,7 +36,7 @@ def get_args():
         help='Reduce noise by taking the first principle componenet'
         'of cam_weights*activations')
     parser.add_argument('--method', type=str, default='gradcam',
-                        choices=['gradcam', 'hirescam', 'gradcam++',
+                        choices=['gradcam', 'gradcam++',
                                  'scorecam', 'xgradcam',
                                  'ablationcam', 'eigencam',
                                  'eigengradcam', 'layercam', 'fullgrad'],
@@ -57,7 +53,7 @@ def get_args():
     return args
 
 
-if __name__ == '__main__':
+def main(model, img_path, output_path, imgname):
     """ python cam.py -image-path <path_to_image>
     Example usage of loading an image, and computing:
         1. CAM
@@ -65,10 +61,9 @@ if __name__ == '__main__':
         3. Combining both
     """
 
-    args = get_args()
+    args = get_args(img_path) #<------------------------------------------------------
     methods = \
         {"gradcam": GradCAM,
-         "hirescam":HiResCAM,
          "scorecam": ScoreCAM,
          "gradcam++": GradCAMPlusPlus,
          "ablationcam": AblationCAM,
@@ -76,16 +71,13 @@ if __name__ == '__main__':
          "eigencam": EigenCAM,
          "eigengradcam": EigenGradCAM,
          "layercam": LayerCAM,
-         "fullgrad": FullGrad,
-         "gradcamelementwise": GradCAMElementWise}
-
-    model = models.resnet50(pretrained=True)
+         "fullgrad": FullGrad}
 
     # Choose the target layer you want to compute the visualization for.
     # Usually this will be the last convolutional layer in the model.
     # Some common choices can be:
     # Resnet18 and 50: model.layer4
-    # VGG, densenet161: model.features[-1]
+    # VGG, densenet161: model.features[-1] <------------------------------------------------------------------------------------
     # mnasnet1_0: model.layers[-1]
     # You can print the model to help chose the layer
     # You can pass a list with several target layers,
@@ -93,7 +85,7 @@ if __name__ == '__main__':
     # You can also try selecting all layers of a certain type, with e.g:
     # from pytorch_grad_cam.utils.find_layers import find_layer_types_recursive
     # find_layer_types_recursive(model, [torch.nn.ReLU])
-    target_layers = [model.layer4]
+    target_layers = [model.features[-1]]
 
     rgb_img = cv2.imread(args.image_path, 1)[:, :, ::-1]
     rgb_img = np.float32(rgb_img) / 255
@@ -139,6 +131,10 @@ if __name__ == '__main__':
     cam_gb = deprocess_image(cam_mask * gb)
     gb = deprocess_image(gb)
 
-    cv2.imwrite(f'{args.method}_cam.jpg', cam_image)
-    cv2.imwrite(f'{args.method}_gb.jpg', gb)
-    cv2.imwrite(f'{args.method}_cam_gb.jpg', cam_gb)
+    os.chdir(output_path) #<----------------------------------------------
+    cv2.imwrite(f'{imgname}_{args.method}_cam.jpg', cam_image)
+    cv2.imwrite(f'{imgname}_{args.method}_gb.jpg', gb)
+    cv2.imwrite(f'{imgname}_{args.method}_cam_gb.jpg', cam_gb)
+    os.chdir(os.path.abspath(os.path.join(os.getcwd(), os.pardir)))
+    os.chdir(os.path.abspath(os.path.join(os.getcwd(), os.pardir)))
+    #os.chdir("../nodes") #<----------------------------------------------
